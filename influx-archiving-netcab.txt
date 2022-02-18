@@ -1,0 +1,39 @@
+option task = {
+    name: "Archive_Netcab",
+    every: 5d,
+}
+
+// get the average daily temperature over the past ten days into bucket Archive_Test2, organisation "feef" into a column called "averagetemp"
+from(bucket: "test2")
+    |> range(start: -duration(v: int(v: task.every) * 2))
+    |> filter(fn: (r) => r["_measurement"] == "pimeasure")
+    |> filter(fn: (r) => r["_field"] == "temperature")
+    |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)
+    |> to(bucket: "Archive_Test2", org: "feef", fieldFn: (r) => ({"averagetemp": r._value}))
+
+
+// get the maximum daily temperatures over the past ten days into bucket Archive_Test2, organisation "feef" into a column called "maxtemp"
+from(bucket: "test2")
+    |> range(start: -duration(v: int(v: task.every) * 2))
+    |> filter(fn: (r) => r["_measurement"] == "pimeasure")
+    |> filter(fn: (r) => r["_field"] == "temperature")
+    |> aggregateWindow(every: 1d, fn: max, createEmpty: false)
+    |> to(bucket: "Archive_Test2", org: "feef", fieldFn: (r) => ({"maxtemp": r._value}))
+
+// get the minimum daily temperatures over the past ten days into bucket Archive_Test2, organisation "feef" into a column called "mintemp"
+from(bucket: "test2")
+    |> range(start: -duration(v: int(v: task.every) * 2))
+    |> filter(fn: (r) => r["_measurement"] == "pimeasure")
+    |> filter(fn: (r) => r["_field"] == "temperature")
+    |> aggregateWindow(every: 1d, fn: min, createEmpty: false)
+    |> to(bucket: "Archive_Test2", org: "feef", fieldFn: (r) => ({"mintemp": r._value}))
+
+
+// This totals up the number of minutes that the fan was running, recorded in this column every minute as either 1 or 0 for the current status
+from(bucket: "test2")
+    |> range(start: -duration(v: int(v: task.every) * 2))
+    |> filter(fn: (r) => r["_measurement"] == "pimeasure")
+    |> filter(fn: (r) => r["_field"] == "fanstatus")
+    |> filter(fn: (r) => r._value == 1)
+    |> aggregateWindow(column: "_value", every: 1d, fn: sum)
+    |> to(bucket: "Archive_Test2", org: "feef", fieldFn: (r) => ({"fanruntime": r._value}))

@@ -1,0 +1,128 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {    },
+    "parameters": {
+      "location": {
+        "type": "string",
+         "defaultValue": "[resourceGroup().location]"
+      }
+    },
+    "functions": [],
+    "resources": [
+      {
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-06-01",
+        "name": "HubVNet1",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.0.0/22"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "Spoke_Transit_Subnet",
+              "properties": {
+                "addressPrefix": "10.0.0.0/24"
+              }
+            },
+            {
+              "name": "FW_Inside",
+              "properties": {
+                "addressPrefix": "10.0.1.0/24"
+              }
+            },
+            {
+              "name": "FW_Outside",
+              "properties": {
+                "addressPrefix": "10.0.2.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-06-01",
+        "name": "Spoke1VNET",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.10.0/24"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "Spoke1Subnet1",
+              "properties": {
+                "addressPrefix": "10.0.10.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-06-01",
+        "name": "Spoke2VNET",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.20.0/24"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "Spoke2Subnet1",
+              "properties": {
+                "addressPrefix": "10.0.20.0/24"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+        "apiVersion": "2020-05-01",
+        "name": "HubVNet1/HubVNet1-Spoke1VNET",
+        "properties": {
+          "allowVirtualNetworkAccess": true,
+          "allowForwardedTraffic": false,
+          "allowGatewayTransit": false,
+          "useRemoteGateways": false,
+          "remoteVirtualNetwork": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/', 'Spoke1VNET')]"
+          }
+        },
+        "dependsOn": [
+          "Spoke1VNET",
+          "HubVNet1"
+        ]
+      },
+      {
+        "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+        "apiVersion": "2020-05-01",
+        "name": "HubVNet1/HubVNet1-Spoke2VNET",
+        "properties": {
+          "allowVirtualNetworkAccess": true,
+          "allowForwardedTraffic": false,
+          "allowGatewayTransit": false,
+          "useRemoteGateways": false,
+          "remoteVirtualNetwork": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworks/', 'Spoke2VNET')]"
+          }
+        },
+        "dependsOn": [
+          "Spoke2VNET",
+          "HubVNet1"
+        ]
+      }
+      
+      
+    ]
+  }
+
